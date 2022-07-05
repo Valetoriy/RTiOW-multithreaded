@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "Color.hpp"
+#include "Vec3.hpp"
+
 auto main() -> int {
     constexpr auto image_width{256};
     constexpr auto image_height{256};
@@ -16,9 +19,9 @@ auto main() -> int {
         std::cerr << fmt::format("\rОсталось скан-линий: {} ", image_height - i)
                   << std::flush;
         for (int j{}; j < image_width; ++j) {
-            auto g{float(i) / image_height + float(j) / image_width};
-
-            fmt::print("0 {} 0\n", static_cast<int>(g * 127.999));
+            Color pixel_color{
+                0, (double(i) / image_height + double(j) / image_width) / 2, 0};
+            write_color(std::cout, pixel_color);
         }
     }
 

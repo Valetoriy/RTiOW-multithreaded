@@ -5,7 +5,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 project(rays LANGUAGES CXX)
 
 add_executable(${PROJECT_NAME} 
-    main.cpp)
+    src/main.cpp)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
     fmt
