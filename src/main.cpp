@@ -6,7 +6,25 @@
 #include "Ray.hpp"
 #include "Vec3.hpp"
 
+constexpr auto hit_sphere(const Point3 &center, const double &radius,
+                          const Ray &r) {
+    // r^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2
+    // P - точка на поверхности сферы; вектор P - C в || = r
+    // (P - C)^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2
+    // => (P - C)^2 = r^2 => (A + tb - C)^2 = r^2
+    // => t^2 * b . b + 2 * t * b . (A - C) + (A - C) . (A - C) - r^2 = 0
+    // ^^ - квадратное уравнение
+    auto AmC{r.origin() - center};
+    auto a{dot(r.direction(), r.direction())};
+    auto b{2 * dot(r.direction(), AmC)};
+    auto c{dot(AmC, AmC) - radius * radius};
+
+    return (b * b - 4 * a * c) >= 0;
+}
+
 constexpr auto ray_color(const Ray &r) {
+    if (hit_sphere({0, 0, -1}, 0.5, r)) return Color{1.0, 0, 0};
+
     auto unit_direction{unit_vector(r.direction())};
     auto t{0.5 * (unit_direction.y() + 1.0)};
 
