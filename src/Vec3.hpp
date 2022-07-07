@@ -18,7 +18,7 @@ class Vec3 {
     constexpr auto operator[](const size_t &i) const { return e[i]; }
     constexpr auto &operator[](const size_t &i) { return e[i]; }
 
-    constexpr auto operator-() -> Vec3 const { return {-e[0], -e[1], -e[2]}; }
+    constexpr auto operator-() const -> Vec3 { return {-e[0], -e[1], -e[2]}; }
 
     constexpr auto &operator+=(const Vec3 &other) {
         e[0] += other.e[0];
@@ -60,9 +60,13 @@ constexpr inline auto operator*(const double &t, const Vec3 &v) -> Vec3 {
     return {t * v.e[0], t * v.e[1], t * v.e[2]};
 }
 
-constexpr inline auto operator*(const Vec3 &v, const double &t) { return t * v; }
+constexpr inline auto operator*(const Vec3 &v, const double &t) {
+    return t * v;
+}
 
-constexpr inline auto operator/(const Vec3 &v, const double &t) { return (1 / t) * v; }
+constexpr inline auto operator/(const Vec3 &v, const double &t) {
+    return (1 / t) * v;
+}
 
 constexpr inline auto dot(const Vec3 &v1, const Vec3 &v2) {
     return v1.e[0] * v2.e[0] + v1.e[1] * v2.e[1] + v1.e[2] * v2.e[2];

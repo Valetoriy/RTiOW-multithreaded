@@ -3,30 +3,17 @@
 #include <iostream>
 
 #include "Color.hpp"
-#include "Ray.hpp"
-#include "Vec3.hpp"
+#include "HittableList.hpp"
+#include "Sphere.hpp"
+#include "rtweekend.hpp"
 
-constexpr auto hit_sphere(const Point3 &center, const double &radius,
-                          const Ray &r) {
-    // r^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2
-    // P - точка на поверхности сферы; вектор P - C в || = r
-    // (P - C)^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2
-    // => (P - C)^2 = r^2 => (A + tb - C)^2 = r^2
-    // => t^2 * b . b + 2 * t * b . (A - C) + (A - C) . (A - C) - r^2 = 0
-    // ^^ - квадратное уравнение
-    auto AmC{r.origin() - center};
-    auto a{dot(r.direction(), r.direction())};
-    auto b{2 * dot(r.direction(), AmC)};
-    auto c{dot(AmC, AmC) - radius * radius};
-
-    return (b * b - 4 * a * c) >= 0;
-}
-
-constexpr auto ray_color(const Ray &r) {
-    if (hit_sphere({0, 0, -1}, 0.5, r)) return Color{1.0, 0, 0};
+constexpr auto ray_color(const Ray &r, const HittableList &world) {
+    hit_record rec;
+    if (world.hit(r, 0, std::numeric_limits<double>::infinity(), rec))
+        return 0.5 * (rec.normal + Color{1, 1, 1});
 
     auto unit_direction{unit_vector(r.direction())};
-    auto t{0.5 * (unit_direction.y() + 1.0)};
+    auto t = 0.5 * (unit_direction.y() + 1.0);
 
     // (1 - t) * начЗначение + t * конЗначение
     return (1.0 - t) * Color{1.0, 1.0, 1.0} + t * Color{0.5, 0.7, 1.0};
@@ -40,6 +27,12 @@ auto main() -> int {
     constexpr auto aspect_raio{16.0 / 9.0};
     constexpr auto image_width{400};
     constexpr auto image_height{static_cast<int>(image_width / aspect_raio)};
+
+    // Мир
+    HittableList world;
+    world.objects.push_back(std::make_shared<Sphere>(Point3{0, 0, -1}, 0.5));
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{0, -100.5, -1}, 100));
 
     // Камера
     constexpr auto viewport_height{2.0};
@@ -62,7 +55,7 @@ auto main() -> int {
             auto v{double(i) / (image_height - 1)};
             Ray r{origin,
                   lower_left_corner + u * horizontal + v * vertical - origin};
-            auto pixel_color{ray_color(r)};
+            auto pixel_color{ray_color(r, world)};
             write_color(std::cout, pixel_color);
         }
     }
