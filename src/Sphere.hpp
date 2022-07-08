@@ -5,18 +5,20 @@
 
 class Sphere : public Hittable {
    public:
-    Sphere() = default;
-    Sphere(const Point3 &c, const double &r) : center{c}, radius{r} {}
-    virtual auto hit(const Ray &r, const double &t_min, const double &t_max,
-                     hit_record &rec) const -> bool override;
+    constexpr Sphere() = default;
+    constexpr Sphere(const Point3 &c, const double &r) : center{c}, radius{r} {}
+    constexpr virtual auto hit(const Ray &r, const double &t_min,
+                               const double &t_max, hit_record &rec) const
+        -> bool override;
 
    public:
     Point3 center;
     double radius;
 };
 
-inline auto Sphere::hit(const Ray &r, const double &t_min, const double &t_max,
-                        hit_record &rec) const -> bool {
+constexpr inline auto Sphere::hit(const Ray &r, const double &t_min,
+                                  const double &t_max, hit_record &rec) const
+    -> bool {
     // r^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2
     // P - точка на поверхности сферы; вектор P - C в || = r
     // (P - C)^2 = (x - Cx)^2 + (y - Cy)^2 + (z - Cz)^2

@@ -7,6 +7,7 @@
 
 class HittableList : public Hittable {
    public:
+    // Не constexpr из-за std::shared_ptr
     virtual auto hit(const Ray &r, const double &t_min, const double &t_max,
                      hit_record &rec) const -> bool override;
 
