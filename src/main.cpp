@@ -8,10 +8,19 @@
 #include "Sphere.hpp"
 #include "rtweekend.hpp"
 
-constexpr auto ray_color(const Ray &r, const HittableList &world) {
+constexpr auto ray_color(const Ray &r, const HittableList &world,
+                         const int &depth) -> Color {
+    if (depth <= 0) return {0, 0, 0};
+
     hit_record rec;
-    if (world.hit(r, 0, std::numeric_limits<double>::infinity(), rec))
-        return 0.5 * (rec.normal + Color{1, 1, 1});
+    // При t_min = 0 лучи часто натыкаются на тот же объект, от которого
+    // отразились
+    if (world.hit(r, 0.001, std::numeric_limits<double>::infinity(), rec)) {
+        auto target{rec.P + random_in_hemisphere(rec.normal)};
+        // По зн-у Ламберта:
+        // auto target{rec.P + rec.normal + random_unit_vector()};
+        return 0.5 * ray_color(Ray{rec.P, target - rec.P}, world, depth - 1);
+    }
 
     auto unit_direction{unit_vector(r.direction())};
     auto t = 0.5 * (unit_direction.y() + 1.0);
@@ -29,6 +38,7 @@ auto main() -> int {
     constexpr auto image_width{400};
     constexpr auto image_height{static_cast<int>(image_width / aspect_raio)};
     constexpr auto samples_per_pixel{100};
+    constexpr auto max_depth{50};
 
     // Мир
     HittableList world;
@@ -50,7 +60,7 @@ auto main() -> int {
                 auto u{(j + random_double()) / (image_width - 1)};
                 auto v{(i + random_double()) / (image_height - 1)};
                 Ray r{cam.get_ray(u, v)};
-                pixel_color += ray_color(r, world);
+                pixel_color += ray_color(r, world, max_depth);
             }
             write_color(std::cout, pixel_color, samples_per_pixel);
         }
