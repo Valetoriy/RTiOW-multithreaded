@@ -1,10 +1,14 @@
 #pragma once
 
-#include "Ray.hpp"
+#include "rtweekend.hpp"
+
+// Для избежания цикла зависимостей
+class Material;
 
 struct hit_record {
     Point3 P;
     Vec3 normal;
+    std::shared_ptr<Material> mat_ptr;
     double t;
     bool front_face;
 

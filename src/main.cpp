@@ -5,21 +5,23 @@
 #include "Camera.hpp"
 #include "Color.hpp"
 #include "HittableList.hpp"
+#include "Material.hpp"
 #include "Sphere.hpp"
 #include "rtweekend.hpp"
 
-constexpr auto ray_color(const Ray &r, const HittableList &world,
-                         const int &depth) -> Color {
+auto ray_color(const Ray &r, const HittableList &world, const int &depth)
+    -> Color {
     if (depth <= 0) return {0, 0, 0};
 
     hit_record rec;
     // При t_min = 0 лучи часто натыкаются на тот же объект, от которого
     // отразились
     if (world.hit(r, 0.001, std::numeric_limits<double>::infinity(), rec)) {
-        auto target{rec.P + random_in_hemisphere(rec.normal)};
-        // По зн-у Ламберта:
-        // auto target{rec.P + rec.normal + random_unit_vector()};
-        return 0.5 * ray_color(Ray{rec.P, target - rec.P}, world, depth - 1);
+        Ray scattered;
+        Color attenuation;
+        if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+            return attenuation * ray_color(scattered, world, depth - 1);
+        return {0, 0, 0};
     }
 
     auto unit_direction{unit_vector(r.direction())};
@@ -42,9 +44,24 @@ auto main() -> int {
 
     // Мир
     HittableList world;
-    world.objects.push_back(std::make_shared<Sphere>(Point3{0, 0, -1}, 0.5));
+    auto material_ground{std::make_shared<Lambertian>(Color{0.8, 0.8, 0})};
+    auto material_center{std::make_shared<Lambertian>(Color{0.1, 0.2, 0.5})};
+    // auto material_center{std::make_shared<Dielectric>(1.5)};
+    // auto material_left{std::make_shared<Metal>(Color{0.8, 0.8, 0.8}, 0.3)};
+    auto material_left{std::make_shared<Dielectric>(1.5)};
+    auto material_right{std::make_shared<Metal>(Color{0.8, 0.6, 0.2}, 0.0)};
+
+    world.objects.push_back(std::make_shared<Sphere>(Point3{0.0, -100.5, -1.0},
+                                                     100.0, material_ground));
     world.objects.push_back(
-        std::make_shared<Sphere>(Point3{0, -100.5, -1}, 100));
+        std::make_shared<Sphere>(Point3{0.0, 0.0, -1.0}, 0.5, material_center));
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{-1.0, 0.0, -1.0}, 0.5, material_left));
+    // При отрицательном радиусе нормаль к поверхности направлена внутрь сферы
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{-1.0, 0.0, -1.0}, -0.4, material_left));
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{1.0, 0.0, -1.0}, 0.5, material_right));
 
     // Камера
     Camera cam;

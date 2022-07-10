@@ -6,7 +6,8 @@
 class Sphere : public Hittable {
    public:
     constexpr Sphere() = default;
-    constexpr Sphere(const Point3 &c, const double &r) : center{c}, radius{r} {}
+    Sphere(const Point3 &c, const double &r, const std::shared_ptr<Material> &m)
+        : center{c}, radius{r}, mat_ptr{m} {}
     constexpr virtual auto hit(const Ray &r, const double &t_min,
                                const double &t_max, hit_record &rec) const
         -> bool override;
@@ -14,6 +15,7 @@ class Sphere : public Hittable {
    public:
     Point3 center;
     double radius;
+    std::shared_ptr<Material> mat_ptr;
 };
 
 constexpr inline auto Sphere::hit(const Ray &r, const double &t_min,
@@ -49,6 +51,7 @@ constexpr inline auto Sphere::hit(const Ray &r, const double &t_min,
     // <=> unit_vector()
     auto outward_normal = (rec.P - center) / radius;
     rec.set_face_normal(r, outward_normal);
+    rec.mat_ptr = mat_ptr;
 
     return true;
 }

@@ -15,6 +15,12 @@ class Vec3 {
 
     constexpr auto length() const { return std::sqrt(length_squared()); }
 
+    constexpr auto near_zero() const {
+        const auto s{1e-8};
+        return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) &&
+               (std::fabs(e[2]) < s);
+    }
+
     constexpr auto operator[](const size_t &i) const { return e[i]; }
     constexpr auto &operator[](const size_t &i) { return e[i]; }
 
@@ -79,6 +85,19 @@ constexpr inline auto cross(const Vec3 &v1, const Vec3 &v2) -> Vec3 {
 }
 
 constexpr inline auto unit_vector(const Vec3 &v) { return v / v.length(); }
+
+constexpr inline auto reflect(const Vec3 &v, const Vec3 &n) {
+    return v - 2 * dot(v, n) * n;
+}
+
+constexpr inline auto refract(const Vec3 &uv, const Vec3 &n,
+                              const double &etai_over_etap) {
+    auto cos_theta{std::fmin(dot(-uv, n), 1.0)};
+    auto r_out_perp{etai_over_etap * (uv + cos_theta * n)};
+    auto r_out_parr{-std::sqrt(std::fabs(1 - r_out_perp.length_squared())) * n};
+
+    return r_out_perp + r_out_parr;
+}
 
 using Point3 = Vec3;
 using Color = Vec3;
