@@ -34,6 +34,57 @@ auto ray_color(const Ray &r, const HittableList &world, const int &depth)
     // Color{1.0, 1.0, 1.0});
 }
 
+auto random_scene() {
+    HittableList world;
+
+    auto ground_material{std::make_shared<Lambertian>(Color{0.5, 0.5, 0.5})};
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{0, -1000, 0}, 1000, ground_material));
+
+    for (int a{-11}; a < 11; ++a) {
+        for (int b{-11}; b < 11; ++b) {
+            auto choose_mat{random_double()};
+            Point3 center{a + 0.9 * random_double(), 0.2,
+                          b + 0.9 * random_double()};
+
+            if ((center - Point3{4, 0.2, 0}).length() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    auto albedo{random_vec3() * random_vec3()};
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    world.objects.push_back(
+                        std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    auto albedo{random_vec3(0.5, 1)};
+                    auto fuzz{random_double(0, 0.5)};
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    world.objects.push_back(
+                        std::make_shared<Sphere>(center, 0.2, sphere_material));
+                } else {
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    world.objects.push_back(
+                        std::make_shared<Sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    auto material1{std::make_shared<Dielectric>(1.5)};
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{0, 1, 0}, 1, material1));
+
+    auto material2{std::make_shared<Lambertian>(Color{0.4, 0.2, 0.1})};
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{-4, 1, 0}, 1, material2));
+
+    auto material3{std::make_shared<Metal>(Color{0.7, 0.6, 0.5}, 0)};
+    world.objects.push_back(
+        std::make_shared<Sphere>(Point3{4, 1, 0}, 1, material3));
+
+    return world;
+}
+
 auto main() -> int {
     // Изображение
     constexpr auto aspect_raio{16.0 / 9.0};
@@ -43,26 +94,14 @@ auto main() -> int {
     constexpr auto max_depth{50};
 
     // Мир
-    HittableList world;
-
-    auto material_ground{std::make_shared<Lambertian>(Color{0.8, 0.8, 0})};
-    auto material_center{std::make_shared<Lambertian>(Color{0.1, 0.2, 0.5})};
-    auto material_left{std::make_shared<Dielectric>(1.5)};
-    auto material_right{std::make_shared<Metal>(Color{0.8, 0.6, 0.2}, 0)};
-
-    world.objects.push_back(
-        std::make_shared<Sphere>(Point3{0, -100.5, -1}, 100, material_ground));
-    world.objects.push_back(
-        std::make_shared<Sphere>(Point3{0, 0, -1}, 0.5, material_center));
-    world.objects.push_back(
-        std::make_shared<Sphere>(Point3{-1, 0, -1}, 0.5, material_left));
-    world.objects.push_back(
-        std::make_shared<Sphere>(Point3{-1, 0, -1}, -0.45, material_left));
-    world.objects.push_back(
-        std::make_shared<Sphere>(Point3{1, 0, -1}, 0.5, material_right));
+    auto world{random_scene()};
 
     // Камера
-    Camera cam({-2, 2, 1}, {0, 0, -1}, {0, 1, 0}, 20, aspect_raio);
+    Point3 lookfrom{13, 2, 3};
+    Point3 lookat{0, 0, 0};
+    auto dist_to_focus{10};
+    Camera cam(lookfrom, lookat, {0, 1, 0}, 20, aspect_raio, 0.1,
+               dist_to_focus);
 
     // Рендеринг
     fmt::print("P3\n{} {}\n255\n", image_width, image_height);
