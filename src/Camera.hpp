@@ -5,22 +5,27 @@
 class Camera {
    public:
     // TODO: перенести константы в аргументы конструктора
-    constexpr Camera() {
-        auto aspect_ratio{16.0 / 9.0};
-        auto viewport_height{2.0};
+    constexpr Camera(const Point3 &lookfrom, const Point3 &lookat,
+                     const Vec3 &vup, const double &fov,
+                     const double &aspect_ratio) {
+        auto theta{degrees_to_radians(fov)};
+        auto h{std::tan(theta / 2)};
+        auto viewport_height{2.0 * h};
         auto viewport_width{aspect_ratio * viewport_height};
-        auto focal_length{1.0};
 
-        origin = {0, 0, 0};
-        horizontal = {viewport_width, 0, 0};
-        vertical = {0, viewport_height, 0};
-        lower_left_corner =
-            origin - horizontal / 2 - vertical / 2 - Point3{0, 0, focal_length};
+        auto w{unit_vector(lookfrom - lookat)};
+        auto u{unit_vector(cross(vup, w))};
+        auto v{cross(w, u)};
+
+        origin = lookfrom;
+        horizontal = viewport_width * u;
+        vertical = viewport_height * v;
+        lower_left_corner = origin - horizontal / 2 - vertical / 2 - w;
     }
 
-    auto get_ray(const double &u, const double &v) -> Ray {
+    auto get_ray(const double &s, const double &t) -> Ray {
         return {origin,
-                lower_left_corner + u * horizontal + v * vertical - origin};
+                lower_left_corner + s * horizontal + t * vertical - origin};
     }
 
    private:
