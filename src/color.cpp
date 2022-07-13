@@ -1,12 +1,7 @@
-#pragma once
+#include "color.hpp"
 
-#include <iostream>
-
-#include "Vec3.hpp"
-#include "rtweekend.hpp"
-
-inline auto write_color(std::ostream &out, const Color &pixel_color,
-                        const int &samples_per_pixel) {
+auto write_color(std::ostream &out, const Color &pixel_color,
+                 const int &samples_per_pixel) -> void {
     auto r{pixel_color.x()};
     auto g{pixel_color.y()};
     auto b{pixel_color.z()};

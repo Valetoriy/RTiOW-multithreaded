@@ -4,10 +4,10 @@
 
 class Ray {
    public:
-    constexpr auto origin() const { return orig; }
-    constexpr auto direction() const { return dir; }
+    auto origin() const -> Point3;
+    auto direction() const -> Vec3;
 
-    constexpr auto at(const double &t) const { return orig + t * dir; }
+    auto at(const double &t) const -> Point3;
 
    public:
     Point3 orig;
