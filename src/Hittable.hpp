@@ -15,7 +15,6 @@ struct hit_record {
     auto set_face_normal(const Ray &r, const Vec3 &outward_normal) -> void;
 };
 
-// TODO: CRTP
 class Hittable {
    public:
     virtual auto hit(const Ray &r, const double &t_min, const double &t_max,

@@ -21,12 +21,7 @@ add_executable(${PROJECT_NAME}
 
 set_property(TARGET rays PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-# target_link_libraries(${PROJECT_NAME} PUBLIC
-#     -fsanitize=address,undefined,leak
-# )
-
 target_compile_options(${PROJECT_NAME} PUBLIC
     -Ofast
     -Wall -Wextra -Wpedantic -Wconversion
-    # -fsanitize=address,undefined,leak
 )

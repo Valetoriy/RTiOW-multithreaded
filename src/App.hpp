@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Camera.hpp"
+#include <vector>
+
 #include "HittableList.hpp"
-#include "Material.hpp"
-#include "Sphere.hpp"
-#include "color.hpp"
 #include "rtweekend.hpp"
 
 class App {
    public:
-    App();
+    App(const double &a_r, const int &i_w, const int &s_p_p, const int &m_d);
+    ~App();
 
     auto exec() -> void;
 
@@ -20,5 +19,11 @@ class App {
         -> Color;
 
    private:
+    double aspect_raio;
+    int image_width;
+    int image_height;
+    int samples_per_pixel;
+    int max_depth;
+    std::vector<Color> buffer;
     HittableList world;
 };

@@ -1,15 +1,30 @@
 #include "App.hpp"
 
-App::App() : world{random_scene()} {}
+#include <atomic>
+#include <mutex>
+#include <thread>
+
+#include "Camera.hpp"
+#include "Material.hpp"
+#include "Sphere.hpp"
+#include "color.hpp"
+
+App::App(const double &a_r, const int &i_w, const int &s_p_p, const int &m_d)
+    : aspect_raio{a_r},
+      image_width{i_w},
+      image_height{static_cast<int>(image_width / aspect_raio)},
+      samples_per_pixel{s_p_p},
+      max_depth{m_d},
+      buffer{static_cast<size_t>(image_width * image_height), {1.0, 0, 0}},
+      world{random_scene()} {}
+
+App::~App() {
+    for (const auto &pixel_color : buffer)
+        write_color(std::cout, pixel_color, samples_per_pixel);
+    std::cerr << "\nГотово.\n";
+}
 
 auto App::exec() -> void {
-    // Изображение
-    constexpr auto aspect_raio{16.0 / 9.0};
-    constexpr auto image_width{400};
-    constexpr auto image_height{static_cast<int>(image_width / aspect_raio)};
-    constexpr auto samples_per_pixel{50};
-    constexpr auto max_depth{50};
-
     // Камера
     Point3 lookfrom{13, 2, 3};
     Point3 lookat{0, 0, 0};
@@ -17,26 +32,62 @@ auto App::exec() -> void {
     Camera cam(lookfrom, lookat, {0, 1, 0}, 20, aspect_raio, 0.1,
                dist_to_focus);
 
+    // "Полезная" информация
+    std::cerr << "Количество пикселей: " << buffer.size() << std::endl;
+    auto num_of_threads{static_cast<int>(std::jthread::hardware_concurrency())};
+    std::cerr << "Количество потоков: " << num_of_threads << std::endl;
+
     // Рендеринг
     std::cout << "P3\n"
               << image_width << ' ' << image_height << '\n'
               << "255\n";
 
-    for (int i{image_height - 1}; i >= 0; --i) {
-        std::cerr << "\rОсталось скан-линий: " << i << ' ' << std::flush;
-        for (int j{}; j < image_width; ++j) {
-            Color pixel_color{0, 0, 0};
-            for (int s{}; s < samples_per_pixel; ++s) {
-                auto u{(j + random_double()) / (image_width - 1)};
-                auto v{(i + random_double()) / (image_height - 1)};
-                Ray r{cam.get_ray(u, v)};
-                pixel_color += ray_color(r, world, max_depth);
-            }
-            write_color(std::cout, pixel_color, samples_per_pixel);
-        }
-    }
+    std::vector<std::jthread> thread_pool;
+    thread_pool.reserve(static_cast<size_t>(num_of_threads));
 
-    std::cerr << "\nГотово.\n";
+    std::atomic_int line_counter{0};
+    std::mutex m;
+    auto async_print{[&]() {
+        std::scoped_lock l{m};
+        std::cerr << "\rОсталось скан-линий: "
+                  << image_height - line_counter / num_of_threads << ' '
+                  << std::flush;
+    }};
+
+    auto do_work{
+        [&](std::vector<Color> &buf, const int &start_index, const int &width) {
+            for (int i{image_height - 1}; i >= 0; --i) {
+                for (int j{start_index}; j < start_index + width; ++j) {
+                    Color pixel_color{0, 0, 0};
+                    for (int s{}; s < samples_per_pixel; ++s) {
+                        auto u{(j + random_double()) / (image_width - 1)};
+                        auto v{(i + random_double()) / (image_height - 1)};
+                        Ray r{cam.get_ray(u, v)};
+                        pixel_color += ray_color(r, world, max_depth);
+                    }
+                    buf[static_cast<size_t>(j + (image_height - i - 1) *
+                                                    image_width)] = pixel_color;
+                }
+                ++line_counter;
+                async_print();
+            }
+        }};
+
+    auto width_per_thread{image_width / num_of_threads};
+    // Ширина изображения не всегда делится на кол-во потоков без остатка
+    auto remaining_width{image_width % num_of_threads};
+    if (remaining_width) ++width_per_thread;
+
+    for (int i{}, current_pos{}; i < num_of_threads;
+         ++i, current_pos += width_per_thread) {
+        if (remaining_width)
+            --remaining_width;
+        else if (width_per_thread > image_width / num_of_threads)
+            --width_per_thread;
+
+        thread_pool.emplace_back(do_work, std::ref(buffer), current_pos,
+                                 width_per_thread);
+    }
 }
 
 auto App::ray_color(const Ray &r, const HittableList &world, const int &depth)

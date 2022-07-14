@@ -1,6 +1,5 @@
 #include "Camera.hpp"
 
-// TODO: перенести константы в аргументы конструктора
 Camera::Camera(const Point3 &lookfrom, const Point3 &lookat, const Vec3 &vup,
                const double &fov, const double &aspect_ratio,
                const double &aperture, const double &focus_dist) {
