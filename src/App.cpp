@@ -45,7 +45,7 @@ auto App::exec() -> void {
     std::vector<std::jthread> thread_pool;
     thread_pool.reserve(static_cast<size_t>(num_of_threads));
 
-    std::atomic_int line_counter{0};
+    std::atomic_int line_counter{};
     std::mutex m;
     auto async_print{[&]() {
         std::scoped_lock l{m};
