@@ -47,7 +47,7 @@ auto App::exec() -> void {
 
     std::atomic_int line_counter{};
     std::mutex m;
-    auto async_print{[&]() {
+    auto thread_safe_print{[&]() {
         std::scoped_lock l{m};
         std::cerr << "\rОсталось скан-линий: "
                   << image_height - line_counter / num_of_threads << ' '
@@ -69,7 +69,7 @@ auto App::exec() -> void {
                                                     image_width)] = pixel_color;
                 }
                 ++line_counter;
-                async_print();
+                thread_safe_print();
             }
         }};
 
