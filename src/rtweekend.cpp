@@ -4,13 +4,10 @@ auto degrees_to_radians(const double &degrees) -> double {
     return degrees * std::numbers::pi / 180;
 }
 
-auto random_double() -> double {
-    static std::random_device rd;
-    static std::mt19937 gen{rd()};
-    static std::uniform_real_distribution dist{0.0, 1.0};
-
-    return dist(gen);
-}
+inline std::random_device rd;
+inline std::mt19937 gen{rd()};
+inline std::uniform_real_distribution dist{0.0, 1.0};
+auto random_double() -> double { return dist(gen); }
 
 auto random_double(const double &min, const double &max) -> double {
     return std::lerp(min, max, random_double());
